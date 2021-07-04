@@ -10,6 +10,7 @@ import java.math.BigDecimal
  * @since 1.0.0
  */
 data class SocialSecurityAmount(
+    val salary: BigDecimal,
     var socialSecurityBase: SocialSecurityBase,
     var payPercentage: PayPercentage,
 ) {
@@ -17,15 +18,17 @@ data class SocialSecurityAmount(
      * 养老保险 = 缴费基数 * 比例， 向上取保留1位小数
      */
     val pension: BigDecimal
-        get() = payPercentage.pension.multiply(socialSecurityBase.upperLimit)
-            .setScale(1, BigDecimal.ROUND_UP)
+        get() {
+            return payPercentage.pension.multiply(getPayLimit(salary))
+                .setScale(1, BigDecimal.ROUND_UP)
+        }
 
     /**
      * 医疗保险+生育保险（已合并） = 缴费基数 * 比例， 向上取保留1位小数
      * 公司 10%，个人 2%
      */
     val medicalCare: BigDecimal
-        get() = payPercentage.medicalCare.multiply(socialSecurityBase.upperLimit)
+        get() = payPercentage.medicalCare.multiply(getPayLimit(salary))
             .setScale(1, BigDecimal.ROUND_UP)
 
     /**
@@ -33,7 +36,7 @@ data class SocialSecurityAmount(
      * 公司 0.5%，个人 0.5%
      */
     val unemployment: BigDecimal
-        get() = payPercentage.unemployment.multiply(socialSecurityBase.upperLimit)
+        get() = payPercentage.unemployment.multiply(getPayLimit(salary))
             .setScale(1, BigDecimal.ROUND_UP)
 
     /**
@@ -42,7 +45,7 @@ data class SocialSecurityAmount(
      * 公司 1-7%，个人 1-7%
      */
     val fund: BigDecimal
-        get() = payPercentage.fund.multiply(socialSecurityBase.upperLimit)
+        get() = payPercentage.fund.multiply(getPayLimit(salary))
             .setScale(0, BigDecimal.ROUND_HALF_DOWN)
 
     /**
@@ -51,7 +54,7 @@ data class SocialSecurityAmount(
      * 公司 1-5%，个人 1-5%
      */
     val supplyFund: BigDecimal
-        get() = payPercentage.supplyFund.multiply(socialSecurityBase.upperLimit)
+        get() = payPercentage.supplyFund.multiply(getPayLimit(salary))
             .setScale(0, BigDecimal.ROUND_HALF_DOWN)
 
     /**
@@ -59,4 +62,17 @@ data class SocialSecurityAmount(
      */
     val payAndSocial: BigDecimal
         get() = pension.add(medicalCare).add(unemployment).add(fund).add(supplyFund)
+
+    private fun getPayLimit(salary: BigDecimal): BigDecimal {
+        return when {
+            salary <= socialSecurityBase.lowerLimit -> socialSecurityBase.lowerLimit
+            socialSecurityBase.lowerLimit < salary && salary <= socialSecurityBase.upperLimit -> salary
+            salary >= socialSecurityBase.upperLimit -> socialSecurityBase.upperLimit
+            else -> throw Exception("月工资错误")
+        }
+    }
+
+    override fun toString(): String {
+        return "SocialSecurityAmount(payPercentage=$payPercentage, pension=$pension, medicalCare=$medicalCare, unemployment=$unemployment, fund=$fund, supplyFund=$supplyFund, payAndSocial=$payAndSocial)"
+    }
 }

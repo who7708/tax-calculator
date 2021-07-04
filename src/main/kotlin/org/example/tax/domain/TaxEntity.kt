@@ -24,22 +24,21 @@ class TaxEntity(
      * 社保缴费比例
      */
     var payPercentage: PayPercentage,
+    /**
+     * 专项扣除
+     */
+    var specialDeduction: BigDecimal = BigDecimal(0),
 ) {
 
     /**
      * 五险一金缴费
      */
-    var socialSecurityAmount: SocialSecurityAmount = SocialSecurityAmount(socialSecurityBase, payPercentage)
+    var socialSecurityAmount: SocialSecurityAmount = SocialSecurityAmount(salary, socialSecurityBase, payPercentage)
 
     /**
      * 税前工资=月薪-五险一金-每月减免（目前是5000）
      */
-    var preTaxSalary = BigDecimal("0.0")
-
-    /**
-     * 专项扣除
-     */
-    var specialDeduction = 0
+    var preTaxSalary = salary.minus(this.socialSecurityAmount.payAndSocial)
 
     /**
      * 个人所得税
@@ -52,7 +51,7 @@ class TaxEntity(
     var postTaxSalary = BigDecimal("0.0")
 
     override fun toString(): String {
-        return "TaxEntity(month=$month, salary=$salary, socialSecurityBase=$socialSecurityBase, socialSecurityAmount=$socialSecurityAmount, preTaxSalary=$preTaxSalary, specialDeduction=$specialDeduction, personalIncomeTax=$personalIncomeTax, postTaxSalary=$postTaxSalary)"
+        return "TaxEntity(month=$month, salary=$salary, socialSecurityBase=$socialSecurityBase, payPercentage=$payPercentage, socialSecurityAmount=$socialSecurityAmount, preTaxSalary=$preTaxSalary, specialDeduction=$specialDeduction, personalIncomeTax=$personalIncomeTax, postTaxSalary=$postTaxSalary)"
     }
 
 }
